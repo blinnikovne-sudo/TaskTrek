@@ -1,0 +1,25 @@
+# APK output
+output/
+*.apk
+*.aab
+
+# Node modules
+node_modules/
+
+# Cordova
+cordova-app/platforms/
+cordova-app/plugins/
+cordova-app/.gradle/
+cordova-app/build/
+
+# Android
+*.keystore
+build.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

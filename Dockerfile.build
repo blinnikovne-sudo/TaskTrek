@@ -1,0 +1,47 @@
+# Dockerfile для сборки APK приложения TaskTrek
+# Использование: docker build -f Dockerfile.build -t tasktrek-builder .
+#                docker run --rm -v $(pwd)/output:/output tasktrek-builder
+
+FROM node:20-bullseye
+
+# Установка необходимых пакетов
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка Android Command Line Tools
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH="${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    cd ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
+    unzip -q commandlinetools-linux-11076708_latest.zip && \
+    rm commandlinetools-linux-11076708_latest.zip && \
+    mkdir -p latest && \
+    mv bin lib source.properties NOTICE.txt latest/
+
+# Принятие лицензий и установка SDK компонентов
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+# Установка Cordova
+RUN npm install -g cordova@latest
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Копирование проекта
+COPY cordova-app /app/cordova-app
+
+# Сборка APK
+WORKDIR /app/cordova-app
+RUN cordova build android
+
+# Команда для копирования APK в выходную директорию
+CMD cp platforms/android/app/build/outputs/apk/debug/app-debug.apk /output/TaskTrek.apk && \
+    echo "APK успешно скопирован в ./output/TaskTrek.apk" && \
+    ls -lh /output/TaskTrek.apk

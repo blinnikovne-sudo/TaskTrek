@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: gap: content:">
+    <title>TaskTrek</title>
+    <script src="cordova.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/<ajax>            </ajax>/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes rocketLaunch { 0% { top: 50%; transform: translate(-50%, -50%) scale(1); opacity: 1; } 70% { top: 50%; transform: translate(-50%, -50%) scale(1.05); opacity: 1; } 85% { top: 30%; transform: translate(-50%, -50%) scale(0.9); opacity: 1; } 100% { top: -50%; transform: translate(-50%, -50%) scale(0.3); opacity: 0; } }
+        @keyframes cloudMove { 0% { transform: translateY(-450px); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(450px); opacity: 0; } }
+        @keyframes flicker { 0% { transform: translateX(-50%) scaleY(1); opacity: 1; } 100% { transform: translateX(-50%) scaleY(0.95); opacity: 0.95; } }
+        @keyframes flameGrow { 0% { height: 100px; width: 60px; } 70% { height: 120px; width: 70px; } 85% { height: 180px; width: 80px; } 100% { height: 200px; width: 85px; opacity: 0; } }
+        @keyframes fadeOut { 0% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.8); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-in { animation: slideIn 0.5s ease-out; }
+        .btn-hover { transition: all 0.3s ease; }
+        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255, 140, 77, 0.3); }
+        .btn-hover:active { transform: translateY(0); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); }
+        .checkbox-item { transition: all 0.2s ease; }
+        .checkbox-item:hover { background-color: #fff5f0; }
+    </style>
+</head>
+<body>
+    <div id="loading-screen" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #5a6a7f 0%, #3d4a5f 100%);">
+        <div style="position: relative; width: 400px; height: 400px;">
+            <div class="circle-bg" style="width: 400px; height: 400px; background: linear-gradient(135deg, #3d5a7f 0%, #2a3f5f 100%); border-radius: 50%; position: relative; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); overflow: hidden; animation: fadeOut 5s ease-in forwards;">
+                <div class="cloud cloud-left" style="position: absolute; left: 40px; width: 70px; height: 30px; background: white; border-radius: 50px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); animation: cloudMove 3s linear infinite;"></div>
+                <div class="cloud cloud-right" style="position: absolute; right: 40px; width: 70px; height: 30px; background: white; border-radius: 50px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); animation: cloudMove 3s linear infinite 1.5s;"></div>
+                <div class="rocket" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; animation: rocketLaunch 5s ease-in forwards;">
+                    <div class="rocket-body" style="width: 90px; height: 200px; background: linear-gradient(180deg, #ffd580 0%, #ffb366 50%, #ff8c4d 100%); border-radius: 45px 45px 20px 20px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset -5px 0 10px rgba(0, 0, 0, 0.1);">
+                        <div class="window" style="position: absolute; width: 50px; height: 50px; background: linear-gradient(135deg, #66d9ff 0%, #4db8ff 100%); border-radius: 50%; top: 50px; left: 50%; transform: translateX(-50%); border: 8px solid #ff6633; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 2px 2px 5px rgba(255, 255, 255, 0.3);"></div>
+                        <div class="fin fin-left" style="position: absolute; width: 45px; height: 100px; background: linear-gradient(135deg, #ff8c4d 0%, #ff6633 100%); border-radius: 0 0 25px 25px; bottom: 0; left: -40px; transform: skewY(-5deg); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);"></div>
+                        <div class="fin fin-right" style="position: absolute; width: 45px; height: 100px; background: linear-gradient(135deg, #ff8c4d 0%, #ff6633 100%); border-radius: 0 0 25px 25px; bottom: 0; right: -40px; transform: skewY(5deg); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);"></div>
+                        <div class="booster" style="position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 70px; height: 40px; background: linear-gradient(180deg, #ff6633 0%, #ff4d1a 100%); border-radius: 10px 10px 20px 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);"></div>
+                    </div>
+                    <div class="flame-container" style="position: absolute; bottom: -120px; left: 50%; transform: translateX(-50%); width: 100px; height: 120px;">
+                        <div class="flame" style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 100px; background: linear-gradient(180deg, #ffff99 0%, #ffeb3b 20%, #ff9800 40%, #ff5722 70%, #f44336 100%); border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; box-shadow: 0 0 30px rgba(255, 235, 59, 0.8), 0 0 50px rgba(255, 152, 0, 0.6); animation: flicker 0.15s infinite alternate, flameGrow 5s ease-in forwards; filter: blur(1px);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="root"></div>
+    
+    <script>
+        setTimeout(() => {
+            const clouds = document.querySelectorAll('.cloud');
+            clouds.forEach(cloud => { cloud.style.animationDuration = '0.8s'; });
+        }, 3500);
+        setTimeout(() => { document.getElementById('loading-screen').style.display = 'none'; }, 5000);
+    </script>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const icons = {
+                plus: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+                check: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+                clock: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                calendar: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+                settings: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+                search: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+                filter: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>,
+                download: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
+                upload: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
+                x: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+                edit: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+                trash: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+                chevronDown: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
+                database: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>,
+                shield: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+                barChart: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+                repeat: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+                rocket: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            };
+            return icons[name] || null;
+        };
+
+        const TaskTrackerApp = () => {
+            const [currentPage, setCurrentPage] = useState('current');
+            const [tasks, setTasks] = useState([]);
+            const [labels, setLabels] = useState([]);
+            const [executors, setExecutors] = useState([]);
+            const [supervisors, setSupervisors] = useState([]);
+            const [showTaskModal, setShowTaskModal] = useState(false);
+            const [editingTask, setEditingTask] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [filters, setFilters] = useState({ labels: [], executors: [], supervisors: [], priority: '', dateFrom: '', dateTo: '' });
+            const [showExportModal, setShowExportModal] = useState(false);
+            const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+            const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
+            const [backupFrequency, setBackupFrequency] = useState('weekly');
+            const [lastBackupDate, setLastBackupDate] = useState(null);
+            const [backupFormat, setBackupFormat] = useState('xlsx');
+            const [ganttTaskType, setGanttTaskType] = useState('all');
+
+            useEffect(() => {
+                const savedTasks = localStorage.getItem('tasks');
+                const savedLabels = localStorage.getItem('labels');
+                const savedExecutors = localStorage.getItem('executors');
+                const savedSupervisors = localStorage.getItem('supervisors');
+                const savedNotifications = localStorage.getItem('notificationsEnabled');
+                const savedAutoBackup = localStorage.getItem('autoBackupEnabled');
+                const savedBackupFrequency = localStorage.getItem('backupFrequency');
+                const savedLastBackup = localStorage.getItem('lastBackupDate');
+                const savedBackupFormat = localStorage.getItem('backupFormat');
+
+                if (savedTasks) setTasks(JSON.parse(savedTasks));
+                if (savedLabels) setLabels(JSON.parse(savedLabels));
+                if (savedExecutors) setExecutors(JSON.parse(savedExecutors));
+                if (savedSupervisors) setSupervisors(JSON.parse(savedSupervisors));
+                if (savedNotifications) setNotificationsEnabled(JSON.parse(savedNotifications));
+                if (savedAutoBackup) setAutoBackupEnabled(JSON.parse(savedAutoBackup));
+                if (savedBackupFrequency) setBackupFrequency(savedBackupFrequency);
+                if (savedLastBackup) setLastBackupDate(savedLastBackup);
+                if (savedBackupFormat) setBackupFormat(savedBackupFormat);
+
+                checkNotifications();
+                checkAutoBackup();
+                checkRecurringTasks();
+            }, []);
+
+            useEffect(() => { localStorage.setItem('tasks', JSON.stringify(tasks)); }, [tasks]);
+            useEffect(() => { localStorage.setItem('labels', JSON.stringify(labels)); }, [labels]);
+            useEffect(() => { localStorage.setItem('executors', JSON.stringify(executors)); }, [executors]);
+            useEffect(() => { localStorage.setItem('supervisors', JSON.stringify(supervisors)); }, [supervisors]);
+            useEffect(() => { localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled)); }, [notificationsEnabled]);
+            useEffect(() => { localStorage.setItem('autoBackupEnabled', JSON.stringify(autoBackupEnabled)); }, [autoBackupEnabled]);
+            useEffect(() => { localStorage.setItem('backupFrequency', backupFrequency); }, [backupFrequency]);
+            useEffect(() => { if (lastBackupDate) localStorage.setItem('lastBackupDate', lastBackupDate); }, [lastBackupDate]);
+            useEffect(() => { localStorage.setItem('backupFormat', backupFormat); }, [backupFormat]);
+
+            const checkRecurringTasks = () => {
+                const today = new Date().toISOString().split('T')[0];
+                const updatedTasks = [...tasks];
+                let hasChanges = false;
+                tasks.forEach((task) => {
+                    if (task.isRecurring && task.status === 'completed' && task.recurringFrequency) {
+                        const completedDate = new Date(task.endDate || today);
+                        const nextDate = new Date(completedDate);
+                        switch(task.recurringFrequency) {
+                            case 'daily': nextDate.setDate(nextDate.getDate() + 1); break;
+                            case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
+                            case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                        }
+                        const nextDateStr = nextDate.toISOString().split('T')[0];
+                        if (task.recurringEndDate && nextDateStr > task.recurringEndDate) return;
+                        if (nextDateStr <= today) {
+                            const newTask = { ...task, id: Date.now() + Math.random(), status: 'not-started', startDate: nextDateStr, endDate: '', result: '' };
+                            updatedTasks.push(newTask);
+                            hasChanges = true;
+                        }
+                    }
+                });
+                if (hasChanges) setTasks(updatedTasks);
+            };
+
+            const checkAutoBackup = () => {
+                const savedAutoBackup = localStorage.getItem('autoBackupEnabled');
+                const savedLastBackup = localStorage.getItem('lastBackupDate');
+                const savedFrequency = localStorage.getItem('backupFrequency') || 'weekly';
+                if (!savedAutoBackup || savedAutoBackup === 'false') return;
+                const now = new Date();
+                const lastBackup = savedLastBackup ? new Date(savedLastBackup) : null;
+                if (!lastBackup) return;
+                const daysSinceBackup = Math.floor((now - lastBackup) / (1000 * 60 * 60 * 24));
+                let shouldBackup = false;
+                if (savedFrequency === 'daily' && daysSinceBackup >= 1) shouldBackup = true;
+                if (savedFrequency === 'weekly' && daysSinceBackup >= 7) shouldBackup = true;
+                if (savedFrequency === 'monthly' && daysSinceBackup >= 30) shouldBackup = true;
+                if (shouldBackup && "Notification" in window && Notification.permission === "granted") {
+                    new Notification("Напоминание о бэкапе", { body: "Пора создать резервную копию данных!", icon: "💾" });
+                }
+            };
+
+            const checkNotifications = () => {
+                if (!notificationsEnabled || !("Notification" in window)) return;
+                const today = new Date().toISOString().split('T')[0];
+                const savedTasks = localStorage.getItem('tasks');
+                if (!savedTasks) return;
+                const allTasks = JSON.parse(savedTasks);
+                allTasks.forEach(task => {
+                    if (task.startDate === today && task.status !== 'completed') {
+                        if (Notification.permission === "granted") {
+                            new Notification("Напоминание о задаче", { body: `${task.description}`, icon: "🔔" });
+                        }
+                    }
+                });
+            };
+
+            const requestNotificationPermission = async () => {
+                if (!("Notification" in window)) {
+                    alert("Ваш браузер не поддерживает уведомления");
+                    return;
+                }
+                
+                try {
+                    const permission = await Notification.requestPermission();
+                    if (permission === "granted") {
+                        setNotificationsEnabled(true);
+                        alert("Уведомления включены!");
+                    } else if (permission === "denied") {
+                        alert("Вы запретили уведомления. Разрешите их в настройках браузера.");
+                    } else {
+                        alert("Вы не дали разрешение на уведомления.");
+                    }
+                } catch (error) {
+                    alert("Ошибка при запросе разрешения на уведомления");
+                }
+            };
+
+            const saveTask = (taskData) => {
+                if (editingTask) {
+                    setTasks(tasks.map(t => t.id === editingTask.id ? { ...taskData, id: editingTask.id } : t));
+                } else {
+                    setTasks([...tasks, { ...taskData, id: Date.now() }]);
+                }
+                setShowTaskModal(false);
+                setEditingTask(null);
+            };
+
+            const deleteTask = (taskId) => {
+                if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+                    setTasks(tasks.filter(t => t.id !== taskId));
+                }
+            };
+
+            const getFilteredTasks = (taskList) => {
+                return taskList.filter(task => {
+                    const matchesSearch = task.description.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesLabels = filters.labels.length === 0 || task.labels.some(l => filters.labels.includes(l));
+                    const matchesExecutors = filters.executors.length === 0 || task.executors.some(e => filters.executors.includes(e));
+                    const matchesSupervisors = filters.supervisors.length === 0 || filters.supervisors.includes(task.supervisor);
+                    const matchesPriority = !filters.priority || task.priority === filters.priority;
+                    const matchesDateFrom = !filters.dateFrom || (task.startDate && task.startDate >= filters.dateFrom);
+                    const matchesDateTo = !filters.dateTo || (task.startDate && task.startDate <= filters.dateTo);
+                    return matchesSearch && matchesLabels && matchesExecutors && matchesSupervisors && matchesPriority && matchesDateFrom && matchesDateTo;
+                });
+            };
+
+            const getCurrentTasks = () => {
+                const today = new Date().toISOString().split('T')[0];
+                return getFilteredTasks(tasks.filter(t => (t.status === 'in-progress') || (t.status === 'not-started' && (!t.startDate || t.startDate <= today))));
+            };
+
+            const getCompletedTasks = () => getFilteredTasks(tasks.filter(t => t.status === 'completed'));
+            
+            const getPlannedTasks = () => {
+                const today = new Date().toISOString().split('T')[0];
+                return getFilteredTasks(tasks.filter(t => t.status !== 'completed' && t.startDate && t.startDate > today));
+            };
+
+            const getGanttTasks = () => {
+                switch(ganttTaskType) {
+                    case 'current': return getCurrentTasks();
+                    case 'completed': return getCompletedTasks();
+                    case 'planned': return getPlannedTasks();
+                    default: return getFilteredTasks(tasks);
+                }
+            };
+
+            const performBackup = async (format = backupFormat, showNotification = true) => {
+                const backupData = {
+                    version: '6.1',
+                    exportDate: new Date().toISOString(),
+                    lists: { labels: labels, executors: executors, supervisors: supervisors },
+                    tasks: tasks.map(t => ({
+                        'Метки': t.labels.join('; '),
+                        'Описание': t.description,
+                        'Дата начала': t.startDate || '',
+                        'Дата окончания': t.endDate || '',
+                        'Исполнители': t.executors.join('; '),
+                        'Ответственный': t.supervisor,
+                        'Приоритет': t.priority === 'high' ? 'Высокий' : t.priority === 'medium' ? 'Средний' : 'Низкий',
+                        'Статус': t.status === 'completed' ? 'Завершено' : t.status === 'in-progress' ? 'В процессе' : 'Не выполняется',
+                        'Результат': t.result || '',
+                        'Повторяющаяся': t.isRecurring ? 'Да' : 'Нет',
+                        'Частота': t.recurringFrequency || '',
+                        'Дата окончания повторений': t.recurringEndDate || ''
+                    }))
+                };
+
+                const timestamp = new Date().toISOString().split('T')[0];
+                let blob, filename;
+
+                if (format === 'csv') {
+                    const tasksCSV = Papa.unparse(backupData.tasks);
+                    const listsCSV = Papa.unparse([{
+                        'Метки': labels.join(';'),
+                        'Исполнители': executors.join(';'),
+                        'Ответственные': supervisors.join(';')
+                    }]);
+                    const combinedCSV = '### СПИСКИ ###\n' + listsCSV + '\n\n### ЗАДАЧИ ###\n' + tasksCSV;
+                    blob = new Blob(['\ufeff' + combinedCSV], { type: 'text/csv;charset=utf-8;' });
+                    filename = `backup_tasktrek_${timestamp}.csv`;
+                } else {
+                    const wb = XLSX.utils.book_new();
+                    const wsLists = XLSX.utils.json_to_sheet([{
+                        'Метки': labels.join('; '),
+                        'Исполнители': executors.join('; '),
+                        'Ответственные': supervisors.join('; ')
+                    }]);
+                    XLSX.utils.book_append_sheet(wb, wsLists, 'Списки');
+                    const wsTasks = XLSX.utils.json_to_sheet(backupData.tasks);
+                    XLSX.utils.book_append_sheet(wb, wsTasks, 'Задачи');
+                    
+                    if (window.showSaveFilePicker) {
+                        try {
+                            const handle = await window.showSaveFilePicker({
+                                suggestedName: `backup_tasktrek_${timestamp}.xlsx`,
+                                types: [{
+                                    description: 'Excel файл',
+                                    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+                                }]
+                            });
+                            const writable = await handle.createWritable();
+                            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                            await writable.write(wbout);
+                            await writable.close();
+                            setLastBackupDate(new Date().toISOString());
+                            if (showNotification) alert('Резервная копия сохранена!');
+                            return;
+                        } catch (err) {
+                            if (err.name !== 'AbortError') {
+                                console.error(err);
+                            } else {
+                                return;
+                            }
+                        }
+                    }
+                    
+                    XLSX.writeFile(wb, `backup_tasktrek_${timestamp}.xlsx`);
+                    setLastBackupDate(new Date().toISOString());
+                    if (showNotification) alert('Резервная копия сохранена!');
+                    return;
+                }
+
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: filename,
+                            types: [{
+                                description: 'CSV файл',
+                                accept: { 'text/csv': ['.csv'] }
+                            }]
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                        setLastBackupDate(new Date().toISOString());
+                        if (showNotification) alert('Резервная копия сохранена!');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = filename;
+                            link.click();
+                            setLastBackupDate(new Date().toISOString());
+                            if (showNotification) alert('Резервная копия сохранена!');
+                        }
+                    }
+                } else {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                    setLastBackupDate(new Date().toISOString());
+                    if (showNotification) alert('Резервная копия сохранена!');
+                }
+            };
+
+            const exportData = async (format, dataType) => {
+                let dataToExport = [];
+                switch(dataType) {
+                    case 'current': dataToExport = getCurrentTasks(); break;
+                    case 'completed': dataToExport = getCompletedTasks(); break;
+                    case 'planned': dataToExport = getPlannedTasks(); break;
+                    case 'all':
+                    default: dataToExport = getFilteredTasks(tasks);
+                }
+
+                const exportTasks = dataToExport.map(t => ({
+                    'Метки': t.labels.join('; '),
+                    'Описание': t.description,
+                    'Дата начала': t.startDate || '',
+                    'Дата окончания': t.endDate || '',
+                    'Исполнители': t.executors.join('; '),
+                    'Ответственный': t.supervisor,
+                    'Приоритет': t.priority === 'high' ? 'Высокий' : t.priority === 'medium' ? 'Средний' : 'Низкий',
+                    'Статус': t.status === 'completed' ? 'Завершено' : t.status === 'in-progress' ? 'В процессе' : 'Не выполняется',
+                    'Результат': t.result || '',
+                    'Повторяющаяся': t.isRecurring ? 'Да' : 'Нет',
+                    'Частота': t.recurringFrequency || '',
+                    'Дата окончания повторений': t.recurringEndDate || ''
+                }));
+
+                const timestamp = new Date().toISOString().split('T')[0];
+                let blob, filename;
+
+                if (format === 'csv') {
+                    const csv = Papa.unparse(exportTasks);
+                    blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    filename = `tasks_${dataType}_${timestamp}.csv`;
+                } else {
+                    const ws = XLSX.utils.json_to_sheet(exportTasks);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
+                    
+                    if (window.showSaveFilePicker) {
+                        try {
+                            const handle = await window.showSaveFilePicker({
+                                suggestedName: `tasks_${dataType}_${timestamp}.xlsx`,
+                                types: [{
+                                    description: 'Excel файл',
+                                    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+                                }]
+                            });
+                            const writable = await handle.createWritable();
+                            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                            await writable.write(wbout);
+                            await writable.close();
+                            setShowExportModal(false);
+                            return;
+                        } catch (err) {
+                            if (err.name === 'AbortError') {
+                                return;
+                            }
+                        }
+                    }
+                    
+                    XLSX.writeFile(wb, `tasks_${dataType}_${timestamp}.xlsx`);
+                    setShowExportModal(false);
+                    return;
+                }
+
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: filename,
+                            types: [{
+                                description: 'CSV файл',
+                                accept: { 'text/csv': ['.csv'] }
+                            }]
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = filename;
+                            link.click();
+                        }
+                    }
+                } else {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                }
+                
+                setShowExportModal(false);
+            };
+
+            const importData = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const replaceMode = confirm('Заменить все существующие данные?\n\nНажмите "ОК" чтобы удалить все текущие задачи и загрузить новые.\nНажмите "Отмена" чтобы добавить задачи к существующим.');
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        let importedData = { tasks: [], lists: null };
+                        if (file.name.endsWith('.csv')) {
+                            const content = event.target.result;
+                            if (content.includes('### СПИСКИ ###')) {
+                                const parts = content.split('### ЗАДАЧИ ###');
+                                const listsPart = parts[0].replace('### СПИСКИ ###', '').trim();
+                                const tasksPart = parts[1].trim();
+                                const parsedLists = Papa.parse(listsPart, { header: true });
+                                if (parsedLists.data && parsedLists.data[0]) {
+                                    const listsRow = parsedLists.data[0];
+                                    importedData.lists = {
+                                        labels: listsRow['Метки'] ? listsRow['Метки'].split(';').map(s => s.trim()).filter(Boolean) : [],
+                                        executors: listsRow['Исполнители'] ? listsRow['Исполнители'].split(';').map(s => s.trim()).filter(Boolean) : [],
+                                        supervisors: listsRow['Ответственные'] ? listsRow['Ответственные'].split(';').map(s => s.trim()).filter(Boolean) : []
+                                    };
+                                }
+                                const parsedTasks = Papa.parse(tasksPart, { header: true });
+                                importedData.tasks = parsedTasks.data;
+                            } else {
+                                const parsed = Papa.parse(content, { header: true });
+                                importedData.tasks = parsed.data;
+                            }
+                        } else {
+                            const workbook = XLSX.read(event.target.result, { type: 'binary' });
+                            if (workbook.SheetNames.includes('Списки')) {
+                                const listsSheet = workbook.Sheets['Списки'];
+                                const listsData = XLSX.utils.sheet_to_json(listsSheet);
+                                if (listsData && listsData[0]) {
+                                    const listsRow = listsData[0];
+                                    importedData.lists = {
+                                        labels: listsRow['Метки'] ? listsRow['Метки'].split(';').map(s => s.trim()).filter(Boolean) : [],
+                                        executors: listsRow['Исполнители'] ? listsRow['Исполнители'].split(';').map(s => s.trim()).filter(Boolean) : [],
+                                        supervisors: listsRow['Ответственные'] ? listsRow['Ответственные'].split(';').map(s => s.trim()).filter(Boolean) : []
+                                    };
+                                }
+                            }
+                            const tasksSheet = workbook.Sheets[workbook.SheetNames.includes('Задачи') ? 'Задачи' : workbook.SheetNames[0]];
+                            importedData.tasks = XLSX.utils.sheet_to_json(tasksSheet);
+                        }
+                        
+                        // Функция для безопасного парсинга меток и исполнителей
+                        const parseArrayField = (field) => {
+                            if (!field) return [];
+                            if (Array.isArray(field)) return field;
+                            if (typeof field === 'string') return field.split(';').map(s => s.trim()).filter(Boolean);
+                            return [];
+                        };
+                        
+                        if (importedData.lists) {
+                            if (replaceMode) {
+                                setLabels(importedData.lists.labels);
+                                setExecutors(importedData.lists.executors);
+                                setSupervisors(importedData.lists.supervisors);
+                            } else {
+                                const newLabels = [...new Set([...labels, ...importedData.lists.labels])];
+                                const newExecutors = [...new Set([...executors, ...importedData.lists.executors])];
+                                const newSupervisors = [...new Set([...supervisors, ...importedData.lists.supervisors])];
+                                setLabels(newLabels);
+                                setExecutors(newExecutors);
+                                setSupervisors(newSupervisors);
+                            }
+                        }
+                        
+                        const newTasks = importedData.tasks.filter(t => t['Описание'] || t.description).map(t => ({
+                            id: Date.now() + Math.random(),
+                            labels: parseArrayField(t['Метки'] || t.labels),
+                            description: t['Описание'] || t.description || '',
+                            startDate: t['Дата начала'] || t.startDate || '',
+                            endDate: t['Дата окончания'] || t.endDate || '',
+                            executors: parseArrayField(t['Исполнители'] || t.executors),
+                            supervisor: t['Ответственный'] || t.supervisor || '',
+                            priority: (t['Приоритет'] === 'Высокий' || t.priority === 'high') ? 'high' : (t['Приоритет'] === 'Средний' || t.priority === 'medium') ? 'medium' : 'low',
+                            status: (t['Статус'] === 'Завершено' || t.status === 'completed') ? 'completed' : (t['Статус'] === 'В процессе' || t.status === 'in-progress') ? 'in-progress' : 'not-started',
+                            result: t['Результат'] || t.result || '',
+                            isRecurring: (t['Повторяющаяся'] === 'Да' || t.isRecurring === true || t.isRecurring === 'true'),
+                            recurringFrequency: t['Частота'] || t.recurringFrequency || '',
+                            recurringEndDate: t['Дата окончания повторений'] || t.recurringEndDate || ''
+                        }));
+                        
+                        if (replaceMode) {
+                            setTasks(newTasks);
+                            alert(`✅ Данные заменены!\n\n- Загружено задач: ${newTasks.length}\n${importedData.lists ? `- Меток: ${importedData.lists.labels.length}\n- Исполнителей: ${importedData.lists.executors.length}\n- Ответственных: ${importedData.lists.supervisors.length}` : ''}`);
+                        } else {
+                            setTasks([...tasks, ...newTasks]);
+                            alert(`✅ Данные добавлены!\n\n- Импортировано задач: ${newTasks.length}\n- Всего задач теперь: ${tasks.length + newTasks.length}\n${importedData.lists ? `\n- Меток: ${importedData.lists.labels.length}\n- Исполнителей: ${importedData.lists.executors.length}\n- Ответственных: ${importedData.lists.supervisors.length}` : ''}`);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        alert('❌ Ошибка при импорте файла:\n' + error.message);
+                    }
+                };
+                if (file.name.endsWith('.csv')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsBinaryString(file);
+                }
+            };
+
+            const getDaysSinceBackup = () => {
+                if (!lastBackupDate) return null;
+                const now = new Date();
+                const lastBackup = new Date(lastBackupDate);
+                return Math.floor((now - lastBackup) / (1000 * 60 * 60 * 24));
+            };
+
+            const toggleFilterItem = (filterType, item) => {
+                setFilters(prev => {
+                    const currentItems = prev[filterType];
+                    if (currentItems.includes(item)) {
+                        return { ...prev, [filterType]: currentItems.filter(i => i !== item) };
+                    } else {
+                        return { ...prev, [filterType]: [...currentItems, item] };
+                    }
+                });
+            };
+
+            return (
+                <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #3d4a5f 0%, #2a3544 100%)' }}>
+                    <header className="shadow-lg" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                        <div className="p-4 flex items-center justify-center">
+                            <Icon name="rocket" className="w-8 h-8 mr-3 text-white" />
+                            <h1 className="text-3xl font-bold text-white">TaskTrek</h1>
+                        </div>
+                    </header>
+
+                    <nav className="bg-white shadow-md sticky top-0 z-10">
+                        <div className="flex overflow-x-auto">
+                            {[
+                                { page: 'current', icon: 'clock', label: 'Текущие' },
+                                { page: 'completed', icon: 'check', label: 'Выполненные' },
+                                { page: 'gantt', icon: 'barChart', label: 'Диаграмма' },
+                                { page: 'planned', icon: 'calendar', label: 'Запланир.' },
+                                { page: 'settings', icon: 'settings', label: 'Настройки' }
+                            ].map(item => (
+                                <button
+                                    key={item.page}
+                                    onClick={() => setCurrentPage(item.page)}
+                                    className={`flex-1 min-w-fit px-4 py-3 font-medium text-sm transition-all ${currentPage === item.page ? 'text-white' : 'text-gray-700 hover:bg-orange-50'}`}
+                                    style={currentPage === item.page ? { background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' } : {}}
+                                >
+                                    <Icon name={item.icon} className="inline mr-1 w-4 h-4" />
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    <main className="p-4 max-w-6xl mx-auto animate-slide-in">
+                        {currentPage !== 'settings' && (
+                            <>
+                                <div className="mb-4 space-y-3">
+                                    <div className="relative">
+                                        <Icon name="search" className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                                        <input type="text" placeholder="Поиск задач..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 bg-white shadow-sm transition-all" />
+                                    </div>
+                                    
+                                    <details className="bg-white rounded-xl shadow-md">
+                                        <summary className="p-3 cursor-pointer font-medium flex items-center text-gray-700 hover:bg-orange-50 rounded-xl transition-all">
+                                            <Icon name="filter" className="w-5 h-5 mr-2 text-orange-500" />
+                                            Фильтры
+                                            {(filters.labels.length > 0 || filters.executors.length > 0 || filters.supervisors.length > 0 || filters.priority) && (
+                                                <span className="ml-2 px-2 py-1 bg-orange-500 text-white text-xs rounded-full">
+                                                    {filters.labels.length + filters.executors.length + filters.supervisors.length + (filters.priority ? 1 : 0)}
+                                                </span>
+                                            )}
+                                            <Icon name="chevronDown" className="w-4 h-4 ml-auto" />
+                                        </summary>
+                                        <div className="p-4 space-y-4 border-t max-h-96 overflow-y-auto">
+                                            {/* Метки */}
+                                            <div>
+                                                <label className="block font-bold mb-2 text-gray-700">🏷️ Метки</label>
+                                                <div className="space-y-1">
+                                                    {labels.map(label => (
+                                                        <label key={label} className="flex items-center p-2 rounded-lg cursor-pointer checkbox-item">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={filters.labels.includes(label)}
+                                                                onChange={() => toggleFilterItem('labels', label)}
+                                                                className="mr-2 w-4 h-4 accent-orange-500"
+                                                            />
+                                                            <span className="text-sm">{label}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Исполнители */}
+                                            <div>
+                                                <label className="block font-bold mb-2 text-gray-700">👤 Исполнители</label>
+                                                <div className="space-y-1">
+                                                    {executors.map(executor => (
+                                                        <label key={executor} className="flex items-center p-2 rounded-lg cursor-pointer checkbox-item">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={filters.executors.includes(executor)}
+                                                                onChange={() => toggleFilterItem('executors', executor)}
+                                                                className="mr-2 w-4 h-4 accent-orange-500"
+                                                            />
+                                                            <span className="text-sm">{executor}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Ответственные */}
+                                            <div>
+                                                <label className="block font-bold mb-2 text-gray-700">👁️ Ответственные</label>
+                                                <div className="space-y-1">
+                                                    {supervisors.map(supervisor => (
+                                                        <label key={supervisor} className="flex items-center p-2 rounded-lg cursor-pointer checkbox-item">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={filters.supervisors.includes(supervisor)}
+                                                                onChange={() => toggleFilterItem('supervisors', supervisor)}
+                                                                className="mr-2 w-4 h-4 accent-orange-500"
+                                                            />
+                                                            <span className="text-sm">{supervisor}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Приоритет */}
+                                            <div>
+                                                <label className="block font-bold mb-2 text-gray-700">⚡ Приоритет</label>
+                                                <select value={filters.priority} onChange={(e) => setFilters({...filters, priority: e.target.value})} className="w-full p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-all">
+                                                    <option value="">Все</option>
+                                                    <option value="high">🔴 Высокий</option>
+                                                    <option value="medium">🟡 Средний</option>
+                                                    <option value="low">🟢 Низкий</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Даты */}
+                                            <div>
+                                                <label className="block font-bold mb-2 text-gray-700">📅 Период</label>
+                                                <div className="flex gap-2">
+                                                    <input type="date" value={filters.dateFrom} onChange={(e) => setFilters({...filters, dateFrom: e.target.value})} className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-all" />
+                                                    <input type="date" value={filters.dateTo} onChange={(e) => setFilters({...filters, dateTo: e.target.value})} className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-400 transition-all" />
+                                                </div>
+                                            </div>
+
+                                            <button onClick={() => setFilters({ labels: [], executors: [], supervisors: [], priority: '', dateFrom: '', dateTo: '' })} className="w-full p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all font-medium">
+                                                Сбросить все
+                                            </button>
+                                        </div>
+                                    </details>
+                                </div>
+
+                                {currentPage !== 'gantt' && (
+                                    <button onClick={() => { setEditingTask(null); setShowTaskModal(true); }} className="w-full mb-4 text-white p-4 rounded-xl shadow-lg font-medium flex items-center justify-center btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                        <Icon name="plus" className="w-6 h-6 mr-2" />
+                                        Добавить задачу
+                                    </button>
+                                )}
+                            </>
+                        )}
+
+                        {currentPage === 'current' && <TasksPage tasks={getCurrentTasks()} onEdit={(task) => { setEditingTask(task); setShowTaskModal(true); }} onDelete={deleteTask} onUpdateStatus={(id, status) => setTasks(tasks.map(t => t.id === id ? {...t, status} : t))} emptyIcon="clock" emptyText="Нет текущих задач" />}
+                        {currentPage === 'completed' && <TasksPage tasks={getCompletedTasks()} onEdit={(task) => { setEditingTask(task); setShowTaskModal(true); }} emptyIcon="check" emptyText="Нет выполненных задач" />}
+                        {currentPage === 'gantt' && <GanttChart tasks={getGanttTasks()} ganttTaskType={ganttTaskType} setGanttTaskType={setGanttTaskType} />}
+                        {currentPage === 'planned' && <TasksPage tasks={getPlannedTasks()} onEdit={(task) => { setEditingTask(task); setShowTaskModal(true); }} emptyIcon="calendar" emptyText="Нет запланированных задач" />}
+                        {currentPage === 'settings' && (
+                            <SettingsPage 
+                                onExport={() => setShowExportModal(true)}
+                                onImport={importData}
+                                notificationsEnabled={notificationsEnabled}
+                                onToggleNotifications={requestNotificationPermission}
+                                autoBackupEnabled={autoBackupEnabled}
+                                setAutoBackupEnabled={setAutoBackupEnabled}
+                                backupFrequency={backupFrequency}
+                                setBackupFrequency={setBackupFrequency}
+                                lastBackupDate={lastBackupDate}
+                                backupFormat={backupFormat}
+                                setBackupFormat={setBackupFormat}
+                                onManualBackup={() => performBackup(backupFormat, true)}
+                                daysSinceBackup={getDaysSinceBackup()}
+                            />
+                        )}
+                    </main>
+
+                    {showTaskModal && (
+                        <TaskModal
+                            task={editingTask}
+                            labels={labels}
+                            executors={executors}
+                            supervisors={supervisors}
+                            onSave={saveTask}
+                            onClose={() => { setShowTaskModal(false); setEditingTask(null); }}
+                            onAddLabel={(label) => !labels.includes(label) && setLabels([...labels, label])}
+                            onAddExecutor={(executor) => !executors.includes(executor) && setExecutors([...executors, executor])}
+                            onAddSupervisor={(supervisor) => !supervisors.includes(supervisor) && setSupervisors([...supervisors, supervisor])}
+                        />
+                    )}
+
+                    {showExportModal && <ExportModal onExport={exportData} onClose={() => setShowExportModal(false)} />}
+                </div>
+            );
+        };
+
+        // Продолжение следует в следующем сообщении из-за ограничения размера...
+        // TaskModal, TaskCard, TasksPage, GanttChart, ExportModal, SettingsPage
+
+        const TaskModal = ({ task, labels, executors, supervisors, onSave, onClose, onAddLabel, onAddExecutor, onAddSupervisor }) => {
+            const [formData, setFormData] = useState({
+                labels: task?.labels || [],
+                description: task?.description || '',
+                startDate: task?.startDate || '',
+                endDate: task?.endDate || '',
+                executors: task?.executors || [],
+                supervisor: task?.supervisor || '',
+                priority: task?.priority || 'medium',
+                status: task?.status || 'not-started',
+                result: task?.result || '',
+                isRecurring: task?.isRecurring || false,
+                recurringFrequency: task?.recurringFrequency || '',
+                recurringEndDate: task?.recurringEndDate || ''
+            });
+            const [newLabel, setNewLabel] = useState('');
+            const [newExecutor, setNewExecutor] = useState('');
+            const [newSupervisor, setNewSupervisor] = useState('');
+            const [showResult, setShowResult] = useState(false);
+
+            const handleSubmit = () => {
+                if (formData.labels.length === 0 || !formData.description || formData.executors.length === 0 || !formData.supervisor) {
+                    alert('Пожалуйста, заполните все обязательные поля (минимум 1 метка и 1 исполнитель)');
+                    return;
+                }
+                if (formData.status === 'completed' && !formData.result) {
+                    alert('Необходимо ввести результат выполнения задачи');
+                    setShowResult(true);
+                    return;
+                }
+                if (formData.status === 'completed' && !formData.endDate) {
+                    formData.endDate = new Date().toISOString().split('T')[0];
+                }
+                onSave(formData);
+            };
+
+            const toggleLabel = (label) => {
+                setFormData(prev => ({
+                    ...prev,
+                    labels: prev.labels.includes(label) 
+                        ? prev.labels.filter(l => l !== label)
+                        : [...prev.labels, label]
+                }));
+            };
+
+            const toggleExecutor = (executor) => {
+                setFormData(prev => ({
+                    ...prev,
+                    executors: prev.executors.includes(executor) 
+                        ? prev.executors.filter(e => e !== executor)
+                        : [...prev.executors, executor]
+                }));
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto animate-slide-in">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800">{task ? '✏️ Редактировать' : '✨ Новая задача'}</h2>
+                                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-all">
+                                    <Icon name="x" className="w-6 h-6" />
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">🏷️ Метки * (можно выбрать несколько)</label>
+                                    <div className="border-2 border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto">
+                                        {labels.map(label => (
+                                            <label key={label} className="flex items-center p-2 rounded-lg cursor-pointer checkbox-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.labels.includes(label)}
+                                                    onChange={() => toggleLabel(label)}
+                                                    className="mr-2 w-4 h-4 accent-orange-500"
+                                                />
+                                                <span className="text-sm">{label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                        <input type="text" placeholder="Новая метка" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} className="flex-1 p-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 transition-all" />
+                                        <button onClick={() => { if (newLabel.trim()) { onAddLabel(newLabel.trim()); setFormData({...formData, labels: [...formData.labels, newLabel.trim()]}); setNewLabel(''); }}} className="px-4 py-2 text-white rounded-xl btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                            <Icon name="plus" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    {formData.labels.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {formData.labels.map(label => (
+                                                <span key={label} className="px-3 py-1 text-sm rounded-full font-medium" style={{ background: 'linear-gradient(90deg, #ffe8dc 0%, #ffd4bf 100%)', color: '#ff6633' }}>
+                                                    {label}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">📝 Описание *</label>
+                                    <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all" rows="3" placeholder="Опишите задачу..." />
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">⚡ Приоритет *</label>
+                                    <select value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all">
+                                        <option value="low">🟢 Низкий</option>
+                                        <option value="medium">🟡 Средний</option>
+                                        <option value="high">🔴 Высокий</option>
+                                    </select>
+                                </div>
+
+                                <div className="p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)' }}>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input type="checkbox" checked={formData.isRecurring} onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})} className="mr-3 w-5 h-5 accent-orange-500" />
+                                        <Icon name="repeat" className="w-5 h-5 mr-2 text-orange-600" />
+                                        <span className="font-medium text-gray-800">Повторяющаяся задача</span>
+                                    </label>
+                                    {formData.isRecurring && (
+                                        <div className="mt-3 space-y-2">
+                                            <select value={formData.recurringFrequency} onChange={(e) => setFormData({...formData, recurringFrequency: e.target.value})} className="w-full p-2 border-2 border-orange-200 rounded-lg text-sm focus:outline-none focus:border-orange-400 transition-all">
+                                                <option value="">Выберите частоту</option>
+                                                <option value="daily">📅 Ежедневно</option>
+                                                <option value="weekly">📆 Еженедельно</option>
+                                                <option value="monthly">🗓️ Ежемесячно</option>
+                                            </select>
+                                            <div>
+                                                <label className="block text-sm mb-1 text-gray-700">Повторять до:</label>
+                                                <input type="date" value={formData.recurringEndDate} onChange={(e) => setFormData({...formData, recurringEndDate: e.target.value})} className="w-full p-2 border-2 border-orange-200 rounded-lg text-sm focus:outline-none focus:border-orange-400 transition-all" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block font-medium mb-2 text-gray-700">📅 Дата начала</label>
+                                        <input type="date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all" />
+                                    </div>
+                                    {formData.status === 'completed' && (
+                                        <div>
+                                            <label className="block font-medium mb-2 text-gray-700">🏁 Дата окончания</label>
+                                            <input type="date" value={formData.endDate} onChange={(e) => setFormData({...formData, endDate: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">👤 Исполнители * (можно выбрать несколько)</label>
+                                    <div className="border-2 border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto">
+                                        {executors.map(executor => (
+                                            <label key={executor} className="flex items-center p-2 rounded-lg cursor-pointer checkbox-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.executors.includes(executor)}
+                                                    onChange={() => toggleExecutor(executor)}
+                                                    className="mr-2 w-4 h-4 accent-orange-500"
+                                                />
+                                                <span className="text-sm">{executor}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                        <input type="text" placeholder="Новый исполнитель" value={newExecutor} onChange={(e) => setNewExecutor(e.target.value)} className="flex-1 p-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 transition-all" />
+                                        <button onClick={() => { if (newExecutor.trim()) { onAddExecutor(newExecutor.trim()); setFormData({...formData, executors: [...formData.executors, newExecutor.trim()]}); setNewExecutor(''); }}} className="px-4 py-2 text-white rounded-xl btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                            <Icon name="plus" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    {formData.executors.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {formData.executors.map(executor => (
+                                                <span key={executor} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
+                                                    {executor}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">👁️ Ответственный *</label>
+                                    <select value={formData.supervisor} onChange={(e) => setFormData({...formData, supervisor: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all">
+                                        <option value="">Выберите</option>
+                                        {supervisors.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                    <div className="flex gap-2 mt-2">
+                                        <input type="text" placeholder="Новый ответственный" value={newSupervisor} onChange={(e) => setNewSupervisor(e.target.value)} className="flex-1 p-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 transition-all" />
+                                        <button onClick={() => { if (newSupervisor.trim()) { onAddSupervisor(newSupervisor.trim()); setFormData({...formData, supervisor: newSupervisor.trim()}); setNewSupervisor(''); }}} className="px-4 py-2 text-white rounded-xl btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                            <Icon name="plus" className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block font-medium mb-2 text-gray-700">📊 Статус *</label>
+                                    <select value={formData.status} onChange={(e) => { setFormData({...formData, status: e.target.value}); if (e.target.value === 'completed') setShowResult(true); }} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all">
+                                        <option value="not-started">⏸️ Не выполняется</option>
+                                        <option value="in-progress">⏳ В процессе</option>
+                                        <option value="completed">✅ Завершено</option>
+                                    </select>
+                                </div>
+
+                                {(formData.status === 'completed' || showResult) && (
+                                    <div>
+                                        <label className="block font-medium mb-2 text-gray-700">🎯 Результат *</label>
+                                        <textarea value={formData.result} onChange={(e) => setFormData({...formData, result: e.target.value})} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all" rows="3" placeholder="Опишите результат..." />
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-4">
+                                    <button onClick={handleSubmit} className="flex-1 text-white p-4 rounded-xl font-bold text-lg btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                        {task ? '💾 Сохранить' : '✨ Создать'}
+                                    </button>
+                                    <button onClick={onClose} className="flex-1 bg-gray-200 text-gray-700 p-4 rounded-xl font-bold text-lg btn-hover hover:bg-gray-300">
+                                        ❌ Отмена
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const TaskCard = ({ task, onEdit, onDelete, onUpdateStatus }) => {
+            const priorityColors = {
+                high: 'bg-red-100 text-red-800 border-red-300',
+                medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                low: 'bg-green-100 text-green-800 border-green-300'
+            };
+            const priorityLabels = { high: '🔴 Высокий', medium: '🟡 Средний', low: '🟢 Низкий' };
+            const statusLabels = { 'not-started': '⏸️ Не выполняется', 'in-progress': '⏳ В процессе', 'completed': '✅ Завершено' };
+
+            return (
+                <div className="bg-white rounded-2xl shadow-md p-5 card-hover">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {task.labels.map(label => (
+                                    <span key={label} className="inline-block px-4 py-2 text-sm rounded-full font-medium" style={{ background: 'linear-gradient(90deg, #ffe8dc 0%, #ffd4bf 100%)', color: '#ff6633' }}>
+                                        {label}
+                                    </span>
+                                ))}
+                            </div>
+                            <span className={`inline-block px-3 py-1 text-sm rounded-full border-2 font-medium ${priorityColors[task.priority]}`}>
+                                {priorityLabels[task.priority]}
+                            </span>
+                            {task.isRecurring && (
+                                <span className="inline-block px-3 py-1 text-sm rounded-full ml-2 bg-purple-100 text-purple-800 border-2 border-purple-300 font-medium">
+                                    <Icon name="repeat" className="inline w-3 h-3 mr-1" />
+                                    Повтор
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => onEdit(task)} className="text-orange-600 hover:text-orange-800 transition-all p-2 hover:bg-orange-50 rounded-lg">
+                                <Icon name="edit" className="w-5 h-5" />
+                            </button>
+                            {onDelete && (
+                                <button onClick={() => onDelete(task.id)} className="text-red-600 hover:text-red-800 transition-all p-2 hover:bg-red-50 rounded-lg">
+                                    <Icon name="trash" className="w-5 h-5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <p className="text-gray-800 mb-4 font-medium text-lg">{task.description}</p>
+                    
+                    <div className="space-y-2 text-sm text-gray-600">
+                        {task.startDate && <p className="flex items-center"><span className="mr-2">📅</span> Начало: {new Date(task.startDate).toLocaleDateString('ru-RU')}</p>}
+                        {task.endDate && <p className="flex items-center"><span className="mr-2">🏁</span> Окончание: {new Date(task.endDate).toLocaleDateString('ru-RU')}</p>}
+                        <p className="flex items-center"><span className="mr-2">👤</span> Исполнители: {task.executors.join(', ')}</p>
+                        <p className="flex items-center"><span className="mr-2">👁️</span> Ответственный: {task.supervisor}</p>
+                        <p className="flex items-center"><span className="mr-2">📊</span> Статус: <span className="font-medium ml-1">{statusLabels[task.status]}</span></p>
+                        {task.result && (
+                            <div className="mt-3 p-3 bg-gray-50 rounded-xl border-2 border-gray-100">
+                                <p className="font-medium text-gray-800 mb-1">🎯 Результат:</p>
+                                <p className="text-gray-700">{task.result}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {onUpdateStatus && task.status !== 'completed' && (
+                        <div className="mt-4 flex gap-2">
+                            {task.status === 'not-started' && (
+                                <button onClick={() => onUpdateStatus(task.id, 'in-progress')} className="flex-1 bg-yellow-500 text-white p-3 rounded-xl font-bold text-sm btn-hover">
+                                    ▶️ Начать
+                                </button>
+                            )}
+                            {task.status === 'in-progress' && (
+                                <button onClick={() => onEdit(task)} className="flex-1 bg-green-500 text-white p-3 rounded-xl font-bold text-sm btn-hover">
+                                    ✅ Завершить
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const TasksPage = ({ tasks, onEdit, onDelete, onUpdateStatus, emptyIcon, emptyText }) => {
+            return (
+                <div className="space-y-4">
+                    {tasks.length === 0 ? (
+                        <div className="text-center py-16 text-gray-400">
+                            <Icon name={emptyIcon} className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                            <p className="text-2xl font-medium">{emptyText}</p>
+                        </div>
+                    ) : (
+                        tasks.map(task => (
+                            <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onUpdateStatus={onUpdateStatus} />
+                        ))
+                    )}
+                </div>
+            );
+        };
+
+        const GanttChart = ({ tasks, ganttTaskType, setGanttTaskType }) => {
+            if (tasks.length === 0) {
+                return (
+                    <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-400">
+                        <Icon name="barChart" className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                        <p className="text-2xl font-medium">Нет задач для отображения</p>
+                    </div>
+                );
+            }
+
+            const tasksWithDates = tasks.filter(t => t.startDate);
+            if (tasksWithDates.length === 0) {
+                return (
+                    <div className="bg-white rounded-2xl shadow-md p-8 text-center text-gray-400">
+                        <Icon name="barChart" className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                        <p className="text-2xl font-medium">У задач нет дат начала</p>
+                    </div>
+                );
+            }
+
+            const allDates = tasksWithDates.map(t => new Date(t.startDate));
+            if (ganttTaskType === 'completed') {
+                tasksWithDates.filter(t => t.endDate).forEach(t => allDates.push(new Date(t.endDate)));
+            } else {
+                const today = new Date();
+                allDates.push(today);
+            }
+            
+            const minDate = new Date(Math.min(...allDates));
+            const maxDate = new Date(Math.max(...allDates));
+            const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+
+            const getPosition = (date) => {
+                const days = Math.ceil((new Date(date) - minDate) / (1000 * 60 * 60 * 24));
+                return (days / totalDays) * 100;
+            };
+
+            const getWidth = (task) => {
+                const start = new Date(task.startDate);
+                let end;
+                if (task.status === 'completed' && task.endDate) {
+                    end = new Date(task.endDate);
+                } else {
+                    end = new Date();
+                }
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                return (days / totalDays) * 100;
+            };
+
+            const colors = ['#ff8c4d', '#4db8ff', '#a855f7', '#10b981', '#ec4899', '#6366f1'];
+
+            return (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold flex items-center text-gray-800">
+                            <Icon name="barChart" className="w-7 h-7 mr-3 text-orange-500" />
+                            Диаграмма Ганта
+                        </h2>
+                        <select 
+                            value={ganttTaskType} 
+                            onChange={(e) => setGanttTaskType(e.target.value)}
+                            className="p-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 font-medium"
+                        >
+                            <option value="all">🌐 Все задачи</option>
+                            <option value="current">⏰ Текущие</option>
+                            <option value="completed">✅ Выполненные</option>
+                            <option value="planned">📅 Запланированные</option>
+                        </select>
+                    </div>
+                    
+                    <div className="mb-6 p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)' }}>
+                        <p className="text-sm text-gray-700 font-medium">📅 Период: {minDate.toLocaleDateString('ru-RU')} - {maxDate.toLocaleDateString('ru-RU')}</p>
+                        <p className="text-sm text-gray-600">📊 Всего дней: {totalDays}</p>
+                        <p className="text-sm text-gray-600">📋 Задач: {tasksWithDates.length}</p>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[800px]">
+                            <div className="relative" style={{ minHeight: `${tasksWithDates.length * 70 + 50}px` }}>
+                                <div className="absolute top-0 left-0 right-0 h-10 border-b-2 border-orange-300 bg-orange-50 rounded-t-xl">
+                                    <div className="flex justify-between px-4 pt-2 text-sm font-medium text-orange-700">
+                                        <span>{minDate.toLocaleDateString('ru-RU')}</span>
+                                        <span>{maxDate.toLocaleDateString('ru-RU')}</span>
+                                    </div>
+                                </div>
+
+                                {tasksWithDates.map((task, index) => (
+                                    <div key={task.id} className="absolute left-0 right-0" style={{ top: `${50 + index * 70}px`, height: '60px' }}>
+                                        <div className="flex items-center h-full px-2">
+                                            <div className="w-52 pr-4 flex-shrink-0">
+                                                <p className="text-sm font-bold truncate text-gray-800" title={task.description}>{task.description}</p>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {task.labels.slice(0, 2).map(label => (
+                                                        <span key={label} className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'linear-gradient(90deg, #ffe8dc 0%, #ffd4bf 100%)', color: '#ff6633' }}>
+                                                            {label}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 relative h-10 bg-gray-100 rounded-xl">
+                                                <div 
+                                                    className="absolute h-full rounded-xl shadow-lg flex items-center justify-center text-white text-sm font-bold transition-all hover:shadow-xl hover:scale-105"
+                                                    style={{ 
+                                                        left: `${getPosition(task.startDate)}%`,
+                                                        width: `${getWidth(task)}%`,
+                                                        minWidth: '50px',
+                                                        background: `linear-gradient(135deg, ${colors[index % colors.length]}dd 0%, ${colors[index % colors.length]} 100%)`
+                                                    }}
+                                                    title={task.status === 'completed' && task.endDate ? `${new Date(task.startDate).toLocaleDateString('ru-RU')} - ${new Date(task.endDate).toLocaleDateString('ru-RU')}` : `С ${new Date(task.startDate).toLocaleDateString('ru-RU')}`}
+                                                >
+                                                    {task.status === 'completed' && task.endDate ? 
+                                                        `${Math.ceil((new Date(task.endDate) - new Date(task.startDate)) / (1000 * 60 * 60 * 24)) + 1}д` :
+                                                        '⏳'
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 p-5 rounded-xl" style={{ background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)' }}>
+                        <p className="text-sm text-gray-700 font-medium">
+                            💡 <strong>Подсказка:</strong> Полоса показывает длительность задачи. ⏳ = задача в процессе. Наведите курсор для деталей.
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        const ExportModal = ({ onExport, onClose }) => {
+            const [format, setFormat] = useState('xlsx');
+            const [dataType, setDataType] = useState('all');
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-slide-in">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                <Icon name="download" className="w-6 h-6 mr-2 text-orange-500" />
+                                Экспорт
+                            </h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-all">
+                                <Icon name="x" className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block font-bold mb-3 text-gray-700">📄 Формат файла</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-orange-400 transition-all">
+                                        <input type="radio" value="csv" checked={format === 'csv'} onChange={(e) => setFormat(e.target.value)} className="mr-3 w-5 h-5 accent-orange-500" />
+                                        <span className="font-medium">CSV (.csv)</span>
+                                    </label>
+                                    <label className="flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-orange-400 transition-all">
+                                        <input type="radio" value="xlsx" checked={format === 'xlsx'} onChange={(e) => setFormat(e.target.value)} className="mr-3 w-5 h-5 accent-orange-500" />
+                                        <span className="font-medium">Excel (.xlsx)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold mb-3 text-gray-700">📋 Что экспортировать</label>
+                                <div className="space-y-2">
+                                    {[
+                                        { value: 'all', label: '🌐 Все задачи' },
+                                        { value: 'current', label: '⏰ Текущие' },
+                                        { value: 'completed', label: '✅ Выполненные' },
+                                        { value: 'planned', label: '📅 Запланированные' }
+                                    ].map(item => (
+                                        <label key={item.value} className="flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-orange-400 transition-all">
+                                            <input type="radio" value={item.value} checked={dataType === item.value} onChange={(e) => setDataType(e.target.value)} className="mr-3 w-5 h-5 accent-orange-500" />
+                                            <span className="font-medium">{item.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button onClick={() => onExport(format, dataType)} className="flex-1 text-white p-4 rounded-xl font-bold text-lg btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                    📥 Экспортировать
+                                </button>
+                                <button onClick={onClose} className="flex-1 bg-gray-200 text-gray-700 p-4 rounded-xl font-bold text-lg btn-hover hover:bg-gray-300">
+                                    ❌ Отмена
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsPage = ({ 
+            onExport, onImport, notificationsEnabled, onToggleNotifications, autoBackupEnabled, setAutoBackupEnabled,
+            backupFrequency, setBackupFrequency, lastBackupDate, backupFormat, setBackupFormat, onManualBackup, daysSinceBackup
+        }) => {
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-md p-6">
+                        <h2 className="text-xl font-bold mb-3 text-gray-800 flex items-center">
+                            <Icon name="rocket" className="w-6 h-6 mr-2 text-orange-500" />
+                            О приложении
+                        </h2>
+                        <p className="text-gray-700 mb-2 font-bold text-lg">TaskTrek v6.1</p>
+                        <p className="text-gray-600">Ваш персональный трекер задач с автобэкапом и диаграммой Ганта 🚀</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-md p-6">
+                        <h2 className="text-xl font-bold mb-4 flex items-center text-gray-800">
+                            <Icon name="shield" className="w-6 h-6 mr-2 text-orange-500" />
+                            Автобэкап
+                        </h2>
+                        
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)' }}>
+                                <div>
+                                    <p className="font-bold text-gray-800">Включить автобэкап</p>
+                                    <p className="text-sm text-gray-600">С сохранением списков</p>
+                                </div>
+                                <button onClick={() => setAutoBackupEnabled(!autoBackupEnabled)} className={`px-5 py-3 rounded-xl font-bold transition-all ${autoBackupEnabled ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700'} btn-hover`}>
+                                    {autoBackupEnabled ? '✅ Вкл' : 'Выкл'}
+                                </button>
+                            </div>
+
+                            {autoBackupEnabled && (
+                                <>
+                                    <div>
+                                        <label className="block font-bold mb-2 text-gray-700">Частота</label>
+                                        <select value={backupFrequency} onChange={(e) => setBackupFrequency(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all">
+                                            <option value="daily">📅 Ежедневно</option>
+                                            <option value="weekly">📆 Еженедельно</option>
+                                            <option value="monthly">🗓️ Ежемесячно</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block font-bold mb-2 text-gray-700">Формат</label>
+                                        <select value={backupFormat} onChange={(e) => setBackupFormat(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 transition-all">
+                                            <option value="xlsx">📊 Excel (.xlsx)</option>
+                                            <option value="csv">📄 CSV (.csv)</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="p-4 bg-gray-50 rounded-xl border-2 border-gray-100">
+                                        <p className="font-bold mb-2 text-gray-800">📊 Статус</p>
+                                        {lastBackupDate ? (
+                                            <>
+                                                <p className="text-sm text-gray-600">Последний: {new Date(lastBackupDate).toLocaleString('ru-RU')}</p>
+                                                {daysSinceBackup !== null && <p className="text-sm text-gray-600 mt-1">Дней назад: {daysSinceBackup}</p>}
+                                            </>
+                                        ) : (
+                                            <p className="text-sm text-gray-600">Не создавался</p>
+                                        )}
+                                    </div>
+
+                                    <button onClick={onManualBackup} className="w-full text-white p-4 rounded-xl font-bold text-lg flex items-center justify-center btn-hover" style={{ background: 'linear-gradient(90deg, #ff8c4d 0%, #ff6633 100%)' }}>
+                                        <Icon name="database" className="w-5 h-5 mr-2" />
+                                        💾 Создать сейчас
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-md p-6">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">🔔 Уведомления</h2>
+                        <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)' }}>
+                            <div>
+                                <p className="font-bold text-gray-800">Напоминания</p>
+                                <p className="text-sm text-gray-600">О задачах с датой начала</p>
+                            </div>
+                            <button onClick={onToggleNotifications} className={`px-5 py-3 rounded-xl font-bold transition-all ${notificationsEnabled ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700'} btn-hover`}>
+                                {notificationsEnabled ? '✅ Вкл' : 'Выкл'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-md p-6">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">📤 Импорт и экспорт</h2>
+                        <div className="space-y-3">
+                            <button onClick={onExport} className="w-full text-white p-4 rounded-xl font-bold text-lg flex items-center justify-center btn-hover" style={{ background: 'linear-gradient(90deg, #4db8ff 0%, #3399ff 100%)' }}>
+                                <Icon name="download" className="w-5 h-5 mr-2" />
+                                📥 Экспортировать
+                            </button>
+                            
+                            <label className="block">
+                                <input type="file" accept=".csv,.xlsx" onChange={onImport} className="hidden" />
+                                <div className="w-full text-white p-4 rounded-xl font-bold text-lg flex items-center justify-center cursor-pointer btn-hover" style={{ background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)' }}>
+                                    <Icon name="upload" className="w-5 h-5 mr-2" />
+                                    📤 Импортировать
+                                </div>
+                            </label>
+                            
+                            <div className="p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' }}>
+                                <p className="text-sm font-bold text-green-800">
+                                    ✅ Бэкап сохраняет: задачи + списки (метки, исполнители, ответственные)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TaskTrackerApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
