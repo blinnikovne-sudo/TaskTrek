@@ -35,6 +35,11 @@ jobs:
       - name: Display Cordova version
         run: cordova --version
 
+      - name: Add Android platform
+        run: |
+          cd cordova-app
+          cordova platform add android
+
       - name: Build Android APK
         run: |
           cd cordova-app
